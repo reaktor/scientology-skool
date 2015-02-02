@@ -1,0 +1,74 @@
+---
+title: "bayesAB"
+output: html_document
+---
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r}
+summary(cars)
+```
+
+You can also embed plots, for example:
+
+```{r, echo=FALSE}
+plot(cars)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+Miksi:
+Miten ymmärrät testit oikein
+Tavoite:
+Mitä tarkoittaa posteriori, priori, likelihood
+
+
+Narratiivi:
+
+Esimerkki: Reaktorin osta projekti, kaksi eri tekstiä/väriä
+Kysymys: Kumpi parempi & kuinka paljon & etc.
+Katotaan dataa, päivä countteja (4 numeroa, 5 päivältä) 
+pylväitä & keskiarvoja
+Matemaattisesti: mikä on todennäköisyys p ostaa varianteilla
+Oikea kysymys : mikä on p?
+Malli: Binomiaali jakauma
+kuinka monta konversiota N näytöllä?
+Malli sille miten ajatellaan datan generoituneen
+väärinpäin (data ehdolla malli)
+Bayesin kaava (johto, saa olla ymärtämättä)
+Priori vakioksi, palataan myöh
+Posteriori plotteja -> kaikki ymmärtää mikä on posteriori. 
+todennäköisyysjakaumat mitta meidän epävarmuudelle
+Posteriorista voidaan laskea hakutut asiat
+kuinka paljon toinen on parempi (keskinmäärin), kuinka varmaa on että on parempi
+Priori
+Katotaa Bayesin kaavaa
+prioriin pakko laittaa jotain
+priori on AINA, myös frekventisteillä, vakkei ne aina myönnä
+Meidän ennakkoluulo asiasta
+Luonnollista laittaa tasainen -> ei tiedetä mitään
+toinen tapa, laitetaan matemaattisesti kivan muotoinen funktio -> funktio ei muuta muotoa kun lisätään likelihood
+konjugaatti priori
+tässä Beta
+Esimerkki, tehdään sama analyysi Beta priorilla
+Eri countit nyt
+Poll: mikä on konversio todennäköisyys?
+Poll: paljonko haluat dataa että hylkäät ennakkoluulon?
+Betan parametrit tulee tästä (selitetäänkö?)
+Betan keskiarvo ja hajonta (Poll: onko informatiivista?)
+Uusia posterioiri plotteja
+
+Huomaa:
+Laskut näin helppoja vain tässä tapauksessa, hyvin harvoin -> Syy miksi Bayes ei ole yleistynyt
+Nykyään tietskarit tekee simulaatioilla, ei enää niin vaikeeta
+
+Extroja:
+Frekventistisiä tuloksia, miltä näyttää? Nämäkin on oikein, eri tapa esittää
+Monta ryhmää (A/B ei viittaa ryhmien määrään vaan outcomien määrään) monta treatment
+kovariaatit -> probabilistig programming, ratkaisee ongelman todennäköisyyden käänöstä 
+Testiryhmien tekeminen ja kontrollointi TÄRKEÄÄ.
+Menee helposti pieleen.
+Tapauskohtaista.
+ajalliset vaikutukset
