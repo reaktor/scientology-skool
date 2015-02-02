@@ -20,45 +20,84 @@ betaplots <- function(mean=0.25, sample.size=2^seq(3, 12), prior=c(1, 1)) {
 
 
 
-abtest.posteriorplot <- function(inp, prior = c(1, 1)) {
+abtest.posteriorplot <- function(df, prior = c(1, 1)) {
+    xmax <- max(df$click.rate)
+    xmin <- min(df$click.rate)
+    xx <- reshape(df, idvar = "day", timevar="variant", direction = "wide")
+    cumulative <- cumsum(xx[, -1])
+    cumulative$day <- as.numeric(levels(xx$day))[xx$day]
+
     prior.a <- prior[[1]]; prior.b <- prior[[2]]
-    df <- data.frame(x = seq(0, 0.1, length=500))
-    for (sample in names(inp)){
-        a <- inp[[sample]]$clicks
-        b <- inp[[sample]]$impressions - a
-        df[[sample]] <- dbeta(df$x, a + prior.a, b + prior.b)
+
+    all.days <- data.frame()
+    for (row in row.names(cumulative)){
+        df <- data.frame(x = seq(xmin*0.5, xmax*1.5, length=500))
+        df$day <- cumulative[row, 'day']
+        a <- cumulative[row, 'clicks.A'] + prior.a
+        b <- cumulative[row, 'visits.A'] - cumulative[row, 'clicks.A'] + prior.b
+        df$A <- dbeta(df$x, a, b)
+
+        a <- cumulative[row, 'clicks.B'] + prior.a
+        b <- cumulative[row, 'visits.B'] - cumulative[row, 'clicks.B'] + prior.b
+        df$B <- dbeta(df$x, a, b)
+        all.days <- rbind(all.days, df)
     }
-    plotdf <- melt(df, id='x', variable_name='sample')
-    colnames(plotdf)[3] <- 'pdf'
-    ggplot(plotdf, aes(x, pdf)) + geom_line(aes(colour = sample))
+
+    df <- melt(all.days, id.vars = c('x', 'day'), variable_name='variant')
+    colnames(df)[4] <- 'pdf'
+    gp <- ggplot(df, aes(x, pdf)) + geom_line(aes(colour = variant))
+    gp <- gp + facet_wrap( ~day, scales='free')
+    quartz()
+    print(gp)
 }
 
+betapdf <- function(a, b){
+    df <- data.frame(x = seq(0, 0.1, length=500))
+    df$pdf <- dbeta(df$x, a + prior.a, b + prior.b)
+}
 
 simulate.data <- function(p, N=10){
     sample(c(0,1), N, replace=TRUE, prob=c(1-p, p))
 }
 
 get.counts <- function(x){
-    list(impressions=length(x), clicks=sum(x))
+    list(visits=length(x), clicks=sum(x))
 }
 
 visits.a.day <- function(mu){
-    floor(rnorm(1, mu, mu*0.5))
+    max(0, floor(rnorm(1, mu, mu*0.25)))
 }
 
 
-cnts1 <- get.counts(simulate.data(0.03, N=visits.a.day(2000)))
-cnts2 <- get.counts(simulate.data(0.025, N=visits.a.day(2000)))
+click.data <- function(p.A, p.B, mean.visits=2000, days=2){
+    visits = c()
+    clicks = c()
+    for (day in seq(1,days)){
+        cnts <- get.counts(simulate.data(p.A, N=visits.a.day(mean.visits)))
+        visits <- c(visits, cnts$visits)
+        clicks <- c(clicks, cnts$clicks)
+        cnts <- get.counts(simulate.data(p.B, N=visits.a.day(mean.visits)))        
+        visits <- c(visits, cnts$visits)
+        clicks <- c(clicks, cnts$clicks)        
+    }
+    df <- data.frame(day=as.character(rep(seq(1, days), each=2)),
+               variant=rep(c('A', 'B'), days),
+               visits,
+               clicks)
+    df$click.rate = df$clicks/df$visits
+    df
+}
 
-input.data <- list(A=cnts1, B=cnts2)
-abtest.posteriorplot(input.data)
+example <- click.data(0.025, 0.035, mean.visits=2000, days=4)
+
+zz <- melt(example, id.vars=c('day', 'variant'))
+gp <- ggplot(zz, aes(day, value))
+gp <- gp + geom_bar(stat='identity', aes(fill=variant), alpha=0.9, position='dodge')
+gp <- gp + facet_grid(variable ~ ., scales = 'free_y')
+print(gp)
 
 
-betaplots()
-betaplots(mean=0.5, sample.size=0)
-abtest.posteriorplot(input.data)
-
-
-input.data <- list(A=list(impressions=5000, clicks=80),
-                   B=list(impressions=2500, clicks=50),
-                   C=list(impressions=1000, clicks=35))
+xx <- reshape(example, idvar = "day", timevar="variant", direction = "wide")
+example.cumulative <- cumsum(xx[, -1])
+example.cumulative$day <- xx$day
+example.cumulative$click.rate.A <- example.cumulative$click.rate.B <-  NULL
