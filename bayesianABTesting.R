@@ -20,10 +20,6 @@ betaplots <- function(mean=0.25, sample.size=2^seq(3, 12), prior=c(1, 1)) {
 
 
 
-input.data <- list(A=list(impressions=5000, clicks=80),
-                   B=list(impressions=2500, clicks=50),
-                   C=list(impressions=1000, clicks=35))
-
 abtest.posteriorplot <- function(inp, prior = c(1, 1)) {
     prior.a <- prior[[1]]; prior.b <- prior[[2]]
     df <- data.frame(x = seq(0, 0.1, length=500))
@@ -38,8 +34,31 @@ abtest.posteriorplot <- function(inp, prior = c(1, 1)) {
 }
 
 
+simulate.data <- function(p, N=10){
+    sample(c(0,1), N, replace=TRUE, prob=c(1-p, p))
+}
+
+get.counts <- function(x){
+    list(impressions=length(x), clicks=sum(x))
+}
+
+visits.a.day <- function(mu){
+    floor(rnorm(1, mu, mu*0.5))
+}
+
+
+cnts1 <- get.counts(simulate.data(0.03, N=visits.a.day(2000)))
+cnts2 <- get.counts(simulate.data(0.025, N=visits.a.day(2000)))
+
+input.data <- list(A=cnts1, B=cnts2)
+abtest.posteriorplot(input.data)
+
+
 betaplots()
 betaplots(mean=0.5, sample.size=0)
 abtest.posteriorplot(input.data)
 
 
+input.data <- list(A=list(impressions=5000, clicks=80),
+                   B=list(impressions=2500, clicks=50),
+                   C=list(impressions=1000, clicks=35))
