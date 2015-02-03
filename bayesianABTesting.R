@@ -46,9 +46,8 @@ abtest.posteriorplot <- function(df, prior = c(1, 1)) {
     df <- melt(all.days, id.vars = c('x', 'day'), variable_name='variant')
     colnames(df)[4] <- 'pdf'
     gp <- ggplot(df, aes(x, pdf)) + geom_line(aes(colour = variant))
-    gp <- gp + facet_wrap( ~day, scales='free')
-    quartz()
-    print(gp)
+    list(cumulative=cumulative,
+         plot=gp + facet_wrap( ~day, scales='free'))
 }
 
 betapdf <- function(a, b){
@@ -69,14 +68,14 @@ visits.a.day <- function(mu){
 }
 
 
-click.data <- function(p.A, p.B, mean.visits=2000, days=2){
+click.data <- function(p.A, p.B, days=2, mean.visits.a=2000, mean.visits.b=mean.visits.a*.5){
     visits = c()
     clicks = c()
     for (day in seq(1,days)){
-        cnts <- get.counts(simulate.data(p.A, N=visits.a.day(mean.visits)))
+        cnts <- get.counts(simulate.data(p.A, N=visits.a.day(mean.visits.a)))
         visits <- c(visits, cnts$visits)
         clicks <- c(clicks, cnts$clicks)
-        cnts <- get.counts(simulate.data(p.B, N=visits.a.day(mean.visits)))        
+        cnts <- get.counts(simulate.data(p.B, N=visits.a.day(mean.visits.b)))
         visits <- c(visits, cnts$visits)
         clicks <- c(clicks, cnts$clicks)        
     }
@@ -88,16 +87,41 @@ click.data <- function(p.A, p.B, mean.visits=2000, days=2){
     df
 }
 
-example <- click.data(0.025, 0.035, mean.visits=2000, days=4)
+click.plots <- function(df){
+    out <- list()
+    zz <- melt(df, id.vars=c('day', 'variant'))
+    gp <- ggplot(subset(zz, variable %in% c('visits', 'clicks')), aes(day, value))
+    gp <- gp + geom_bar(stat='identity', aes(fill=variant), alpha=0.9, position='dodge')
+    out$histograms <- gp + facet_grid(variable ~ ., scales = 'free_y')
 
-zz <- melt(example, id.vars=c('day', 'variant'))
-gp <- ggplot(zz, aes(day, value))
-gp <- gp + geom_bar(stat='identity', aes(fill=variant), alpha=0.9, position='dodge')
-gp <- gp + facet_grid(variable ~ ., scales = 'free_y')
-print(gp)
+    gp <- ggplot(subset(zz, variable == 'click.rate'), aes(x=day, y=value, group=variant))
+    out$rates <- gp + geom_line(size=1.5, aes(colour=variant))
+
+    out
+}
+
+gg_color_hue <- function(n) {
+  hues = seq(15, 375, length=n+1)
+  hcl(h=hues, l=65, c=100)[1:n]
+}
+
+colours <- gg_color_hue(2)
+
+rate.A <- 0.052
+rate.B <- 0.068
+
+example <- click.data(rate.A, rate.B, mean.visits.a=1500, days=6)
+
+example.plots <- click.plots(example)
+quartz()
+print(example.plots$rates
+      + geom_hline(yintercept=rate.A, linetype='dashed', colour=colours[1])
+      + geom_hline(yintercept=rate.B, linetype='dashed', colour=colours[2]))
 
 
-xx <- reshape(example, idvar = "day", timevar="variant", direction = "wide")
-example.cumulative <- cumsum(xx[, -1])
-example.cumulative$day <- xx$day
-example.cumulative$click.rate.A <- example.cumulative$click.rate.B <-  NULL
+example.posterior <- abtest.posteriorplot(example)
+quartz()
+print(example.posterior$plot
+      + geom_vline(xintercept=rate.A, linetype='dashed', colour=colours[1])
+      + geom_vline(xintercept=rate.B, linetype='dashed', colour=colours[2]))
+
