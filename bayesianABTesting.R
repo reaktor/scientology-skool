@@ -67,8 +67,9 @@ visits.a.day <- function(mu){
     max(0, floor(rnorm(1, mu, mu*0.25)))
 }
 
-
-click.data <- function(p.A, p.B, days=2, mean.visits.a=2000, mean.visits.b=mean.visits.a*.5){
+click.data <- function(p.A, p.B, days=2, mean.visits=2000, test.group=0.2){
+    mean.visits.a <- mean.visits * (1-test.group)
+    mean.visits.b <- mean.visits * test.group
     visits = c()
     clicks = c()
     for (day in seq(1,days)){
@@ -106,22 +107,3 @@ gg_color_hue <- function(n) {
 }
 
 colours <- gg_color_hue(2)
-
-rate.A <- 0.052
-rate.B <- 0.068
-
-example <- click.data(rate.A, rate.B, mean.visits.a=1500, days=6)
-
-example.plots <- click.plots(example)
-quartz()
-print(example.plots$rates
-      + geom_hline(yintercept=rate.A, linetype='dashed', colour=colours[1])
-      + geom_hline(yintercept=rate.B, linetype='dashed', colour=colours[2]))
-
-
-example.posterior <- abtest.posteriorplot(example)
-quartz()
-print(example.posterior$plot
-      + geom_vline(xintercept=rate.A, linetype='dashed', colour=colours[1])
-      + geom_vline(xintercept=rate.B, linetype='dashed', colour=colours[2]))
-

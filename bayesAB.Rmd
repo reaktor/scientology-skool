@@ -1,74 +1,152 @@
 ---
-title: "bayesAB"
-output: html_document
+title: "A/B testing, Bayes style"
+output:  html_document
 ---
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+```{r, echo=FALSE}
+source('bayesianABTesting.R')
+```
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+###But why?
+So that you understand your test results correctly, including the uncertainty in them, without the p-value hassle
+
+###Also:
+
+Gentle introduction to Bayesian method
+
+###After this
+You understand the results of Bayesin analysis through the _posterior_ & are familiar with the related concepts such as _statistical model_ and _prior_
+
+***
+
+###Our case
+
+Reaktor website has a one-click purchase of a fixed-price-scope-schedule-team agile software project. There are two variants of the button, which is better? How much?
+
+**What do we measure**? 
+
+Visits on the page and button clicks.
+Here's some simulated data (here we set the click rates that we want to find out later). We have on average 1500 visits on the page and test option B for 20% of the visitors:
 
 ```{r}
-summary(cars)
+rate.A <- 0.052
+rate.B <- 0.068
+
+example <- click.data(rate.A, rate.B, mean.visits=1500, test.group=0.2, days=6)
+
+print(example)
 ```
 
-You can also embed plots, for example:
+---
 
-```{r, echo=FALSE}
-plot(cars)
+Let's plot some histograms
+
+```{r}
+example.plots <- click.plots(example)
+
+# quartz(width=14, height=6)
+print(example.plots$histograms)
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+---
+.. and daily average click rates
 
-Miksi:
-Miten ymmärrät testit oikein
-Tavoite:
-Mitä tarkoittaa posteriori, priori, likelihood
+```{r}
+#quartz(width=14, height=6)
+print(example.plots$rates
+      + geom_hline(yintercept=rate.A, linetype='dashed', colour=colours[1])
+      + geom_hline(yintercept=rate.B, linetype='dashed', colour=colours[2]))
+```
+
+---
+###Let's mathematics
+
+What do we want to know?
+
+The _probabilities_ __P~A~__ and __P~B~__that the visitor buys a project when shown a button __A__ or __B__. In this case they are equal to click rates __r~A~__ and __r~B~__ 
+
+What do we have?
+
+Click (__k__) and visit (__N__) counts
+
+---
+
+###A statistical model
+
+Think how the data is generated.
+
+If the probability to click is __P__ the probability to get __k__ clicks in __N__ visits is (the binomial distribution)
+
+$$ P(k,N) = Bin(n,K) \sim P^k (1-P)^{N-k} $$
+
+This gives me way to calculate expected number of clicks __k__ in __N__ visits when I know __P__.
+
+Sadly, I want to have this the other way round: I want to know the expected probability of __P__, when I know that there are __k__ clicks in __N__ visits.
+
+---
+
+###Enter Bayes
+
+The way to turn probabilities around.
+
+$$Prob(k,N,P) = Prob(k, N | P) Prob(P) = Prob(P | k, N) Prob(k, N) $$
+$$\Rightarrow Prob(P | k, N) = \frac{Prob(k, N | P) Prob(P)}{Prob(k, N)} $$
+
+Essentials: 
+
+I can turn the probabilities of getting __k__ clicks in __N__ visits when I know the click rate __r__, into probability of click rate being __r__ when I know that there was __k__ clicks in __N__ visits. 
+
+There is one more thing: The probability of click rate being __r__ in the first place. This is my prejudice or domain knowledge of the click rate. If I know nothing, I'll set it to constant, meaning: all values are equally good guesses. (We'll come back to this later)
 
 
-Narratiivi:
+```{r}
+example.posterior <- abtest.posteriorplot(example)
+# quartz(width=14, height=6)
+print(example.posterior$plot
+      + geom_vline(xintercept=rate.A, linetype='dashed', colour=colours[1])
+      + geom_vline(xintercept=rate.B, linetype='dashed', colour=colours[2]))
 
-Esimerkki: Reaktorin osta projekti, kaksi eri tekstiä/väriä
-Kysymys: Kumpi parempi & kuinka paljon & etc.
-Katotaan dataa, päivä countteja (4 numeroa, 5 päivältä) 
-pylväitä & keskiarvoja
-Matemaattisesti: mikä on todennäköisyys p ostaa varianteilla
-Oikea kysymys : mikä on p?
+```
+
+
+Matemaattisesti: mik?? on todenn??k??isyys p ostaa varianteilla
+Oikea kysymys : mik?? on p?
 Malli: Binomiaali jakauma
-kuinka monta konversiota N näytöllä?
+kuinka monta konversiota N n??yt??ll???
 Malli sille miten ajatellaan datan generoituneen
-väärinpäin (data ehdolla malli)
-Bayesin kaava (johto, saa olla ymärtämättä)
-Priori vakioksi, palataan myöh
-Posteriori plotteja -> kaikki ymmärtää mikä on posteriori. 
-todennäköisyysjakaumat mitta meidän epävarmuudelle
+v????rinp??in (data ehdolla malli)
+Bayesin kaava (johto, saa olla ym??rt??m??tt??)
+Priori vakioksi, palataan my??h
+Posteriori plotteja -> kaikki ymm??rt???? mik?? on posteriori. 
+todenn??k??isyysjakaumat mitta meid??n ep??varmuudelle
 Posteriorista voidaan laskea hakutut asiat
-kuinka paljon toinen on parempi (keskinmäärin), kuinka varmaa on että on parempi
+kuinka paljon toinen on parempi (keskinm????rin), kuinka varmaa on ett?? on parempi
 Priori
 Katotaa Bayesin kaavaa
 prioriin pakko laittaa jotain
-priori on AINA, myös frekventisteillä, vakkei ne aina myönnä
-Meidän ennakkoluulo asiasta
-Luonnollista laittaa tasainen -> ei tiedetä mitään
-toinen tapa, laitetaan matemaattisesti kivan muotoinen funktio -> funktio ei muuta muotoa kun lisätään likelihood
+priori on AINA, my??s frekventisteill??, vakkei ne aina my??nn??
+Meid??n ennakkoluulo asiasta
+Luonnollista laittaa tasainen -> ei tiedet?? mit????n
+toinen tapa, laitetaan matemaattisesti kivan muotoinen funktio -> funktio ei muuta muotoa kun lis??t????n likelihood
 konjugaatti priori
-tässä Beta
-Esimerkki, tehdään sama analyysi Beta priorilla
+t??ss?? Beta
+Esimerkki, tehd????n sama analyysi Beta priorilla
 Eri countit nyt
-Poll: mikä on konversio todennäköisyys?
-Poll: paljonko haluat dataa että hylkäät ennakkoluulon?
-Betan parametrit tulee tästä (selitetäänkö?)
+Poll: mik?? on konversio todenn??k??isyys?
+Poll: paljonko haluat dataa ett?? hylk????t ennakkoluulon?
+Betan parametrit tulee t??st?? (selitet????nk???)
 Betan keskiarvo ja hajonta (Poll: onko informatiivista?)
 Uusia posterioiri plotteja
 
 Huomaa:
-Laskut näin helppoja vain tässä tapauksessa, hyvin harvoin -> Syy miksi Bayes ei ole yleistynyt
-Nykyään tietskarit tekee simulaatioilla, ei enää niin vaikeeta
+Laskut n??in helppoja vain t??ss?? tapauksessa, hyvin harvoin -> Syy miksi Bayes ei ole yleistynyt
+Nyky????n tietskarit tekee simulaatioilla, ei en???? niin vaikeeta
 
 Extroja:
-Frekventistisiä tuloksia, miltä näyttää? Nämäkin on oikein, eri tapa esittää
-Monta ryhmää (A/B ei viittaa ryhmien määrään vaan outcomien määrään) monta treatment
-kovariaatit -> probabilistig programming, ratkaisee ongelman todennäköisyyden käänöstä 
-Testiryhmien tekeminen ja kontrollointi TÄRKEÄÄ.
+Frekventistisi?? tuloksia, milt?? n??ytt????? N??m??kin on oikein, eri tapa esitt????
+Monta ryhm???? (A/B ei viittaa ryhmien m????r????n vaan outcomien m????r????n) monta treatment
+kovariaatit -> probabilistig programming, ratkaisee ongelman todenn??k??isyyden k????n??st?? 
+Testiryhmien tekeminen ja kontrollointi T??RKE????.
 Menee helposti pieleen.
 Tapauskohtaista.
 ajalliset vaikutukset
