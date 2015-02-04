@@ -55,15 +55,12 @@ print(example.plots$rates)
 ```
 
 ---
+
 ###Let's mathematics
 
-What do we want to know?
+_What do we want to know?_ The pre-defined click rates, set by nature,  $\theta_A$ and $\theta_B$ that the visitor buys a project when shown either button __A__ or __B__. In our example where we played nature and generated the data, the rates were __rate.A__ and __rate.B__.
 
-The _probabilities_ __P~A~__ and __P~B~__that the visitor buys a project when shown a button __A__ or __B__. In this case they are equal to click rates __r~A~__ and __r~B~__ 
-
-What do we have?
-
-Click (__k__) and visit (__N__) counts
+_What do we have?_ Click and visit counts, $k$ and $N$.
 
 ---
 
@@ -71,28 +68,71 @@ Click (__k__) and visit (__N__) counts
 
 Think how the data is generated.
 
-If the probability to click is __P__ the probability to get __k__ clicks in __N__ visits is (the binomial distribution)
+If the click rate or the change to click is $\theta$ per visit, the probability to get a click/no-click sequence 00101 is
 
-$$ P(k,N) = Bin(n,K) \sim P^k (1-P)^{N-k} $$
+$$(1-\theta)\,(1-\theta)\,\theta\,(1-\theta)\,\theta\;.$$
 
-This gives me way to calculate expected number of clicks __k__ in __N__ visits when I know __P__.
+For a _single_ sequence of $k$ clicks and $N-k$ non-clicks, the probability is
 
-Sadly, I want to have this the other way round: I want to know the expected probability of __P__, when I know that there are __k__ clicks in __N__ visits.
+$$\theta^k\, (1-\theta)^{N-k}\;.$$
+
+The probability to get _any_ sequence with $k$ clicks and $N-k$  non-cliks is
+
+$$\text{(Number of sequences with $k$ clicks and $N-k$ non-clicks)} \times \theta^k\, (1-\theta)^{N-k}\;.$$
+
+That number of sequences does not depend on click rate, so we don't need to care about it really. But for completeness, it is $N!/(k!(N-k)!)$. So the probability to get a data, or in other words any sequence, with $k$ clicks is
+
+$$p(k, N|\theta) = \frac{N!}{k!(N-k)!} \theta^k\, (1-\theta)^{N-k}\, \propto\, \theta^k\, (1-\theta)^{N-k}\;.$$
+
+That "$\propto$" is "proportional to", and just means that we eventually can skip the constant (as we will see). (Also note that the probability is in no way absolute, the same in all settings, but conditional on the click rate $\theta$.)
+
+Okey, so we know the probability of data of length $N$ with $k$ clicks, given click rate $\theta$. Sadly, this is the wrong way, as it always tends to be statistics.
+
+Now we have the probability of data we have seen, given reality. But that reality is unknown! What we want is the probability of reality given the data se have.
 
 ---
 
 ###Enter Bayes
 
-The way to turn probabilities around.
+Think about the conditional probability for a while. What is the probability to see a full moon tonight? It is, to a first approximation, the probability that it is full-moon time in general, times the probability that you see the moon, if it is there:
 
-$$Prob(k,N,P) = Prob(k, N | P) Prob(P) = Prob(P | k, N) Prob(k, N) $$
-$$\Rightarrow Prob(P | k, N) = \frac{Prob(k, N | P) Prob(P)}{Prob(k, N)} $$
+$$p(\text{full moon & seen}) = p(\text{seen}\, |\, \text{full moon}) \times p(\text{full moon})$$. 
 
-Essentials: 
+You can invent better examples, but the general idea is that for two events $X$ and $Y$, the probability of both occurring is the probability that the first ($X$) occurs, times the probability that $Y$ occurs given $X$, or vice versa.
 
-I can turn the probabilities of getting __k__ clicks in __N__ visits when I know the click rate __r__, into probability of click rate being __r__ when I know that there was __k__ clicks in __N__ visits. 
+$$p(X, Y) = p(X | Y)\, p(Y) = p(Y | X)\, p(X)\;.$$
 
-There is one more thing: The probability of click rate being __r__ in the first place. This is my prejudice or domain knowledge of the click rate. If I know nothing, I'll set it to constant, meaning: all values are equally good guesses. (We'll come back to this later)
+This is quite self-evident, but powerful when applied in a more abstract context. What is the probability of seeing data $D$ and being in world $W$?
+
+$$p(D, W) = p(D | W)\, p(W) = p(W | D)\, p(D)\;.$$
+
+In other words, 
+
+$$
+p(W | D) = \frac{p(D | W)\, p(W)}{p(D)}\;.
+$$
+
+This is quite remarkable, called _the Bayes rule_. It says that if you have _a model_ that gives the probability of data $D$, given a state of the world $W$, you can get the probability of _world itself, given data_, by simple multiplication (or so it seems).
+
+How does this apply to our click rates? Our data $D$ are the observed $k, N$, and our world is described by one simple probability, the click rate $\theta$. Applying Bayes rule, we have
+$$
+p(\theta | k, N) = \frac{p(k, N\, | \, \theta)\, p(\theta)}{p(k, N)} 
+= \frac{N!}{k!(N-k)!} \theta^k\, (1-\theta)^{N-k}\; \frac{p(\theta)}{p(k, N)}\;.
+$$
+
+At this point it helps a lot to note that in a practical setting the data $N$ and $k$ are what they are, they do not change. If we are after $p(\theta\,|\,N, k)$, and especially willing to mainly know how likely different click rates $\theta$ are _compared to each other_, we can drop all constant multiplies. That is, we can drop all multipliers where $\theta$ does not appear. This includes the weird "probability of data" $p(k, N)$ which is constant anyway, as well as the binomial coefficients $N!/(k!(N-k)!)$ originally arising from the number of possible click sequences. We are then left with just
+
+$$ 
+p(\theta\, |\, k, N) \propto \theta^k\, (1-\theta)^{N-k}\;p(\theta)\;.
+$$
+The constant left out form our "propto" or " $\propto$ can be later determined, if needed, from the fact that the sum or integral of the probabilities need to be one: $\int p(\theta\,|\,k, N)\;d\theta$ = 1. (If you google for "beta distribution", you'll find the constant.)
+
+There is one more thing: $p(\theta)$, or the probability of various click rates before any data. WTF is that? It is my prejudice or domain knowledge about how the click rates in general are. If I have no idea, a decent alternative is to set $p(\theta)=\text{const.}$, or that all click rates are equally good guesses. (We'll come back to this later.)
+
+--
+
+Ok, back to reality. :) 
+How do $p(\theta|N, k)$ look like in practice, for the counts of clicks and visits we have? 
 
 
 ```{r}
@@ -103,6 +143,7 @@ print(example.posterior$plot
       + geom_vline(xintercept=rate.B, linetype='dashed', colour=colours[2]))
 
 ```
+
 
 
 Matemaattisesti: mik?? on todenn??k??isyys p ostaa varianteilla
