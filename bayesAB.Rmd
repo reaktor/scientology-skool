@@ -5,9 +5,10 @@ output:  html_document
 
 ```{r, echo=FALSE}
 source('bayesianABTesting.R')
+#theme_set(theme_minimal(12))
 ```
 
-###But why?
+##But why?
 So that you understand your test results correctly, including the uncertainty in them, without the p-value hassle.
 
 ###Also:
@@ -19,7 +20,7 @@ You understand the results of Bayesin analysis, and are familiar with terms such
 
 ***
 
-###Our case
+##Our case
 
 Reaktor website has a one-click purchase of a fixed-price-scope schedule-team agile software project, or whatever. More to the point, there are _two variants of the button_. Which is better? How much?
 
@@ -56,7 +57,9 @@ print(example.plots$rates)
 
 ---
 
-###Let's mathematics
+##Let's mathematics 
+
+(If you want results without too much understanding, skip to the practical section below.)
 
 _What do we want to know?_ The pre-defined click rates, set by nature,  $\theta_A$ and $\theta_B$ that the visitor buys a project when shown either button __A__ or __B__. In our example where we played nature and generated the data, the rates were __rate.A__ and __rate.B__.
 
@@ -127,25 +130,83 @@ p(\theta\, |\, k, N) \propto \theta^k\, (1-\theta)^{N-k}\;p(\theta)\;.
 $$
 The constant left out form our "propto" or " $\propto$ can be later determined, if needed, from the fact that the sum or integral of the probabilities need to be one: $\int p(\theta\,|\,k, N)\;d\theta$ = 1. (If you google for "beta distribution", you'll find the constant.)
 
-There is one more thing: $p(\theta)$, or the probability of various click rates before any data. WTF is that? It is my prejudice or domain knowledge about how the click rates in general are. If I have no idea, a decent alternative is to set $p(\theta)=\text{const.}$, or that all click rates are equally good guesses. (We'll come back to this later.)
+The probability distribution $p(\theta\, |\, k, N)$ is called _the posterior_, because it carries our information of the world _after_ the data.
 
---
+There is one more thing: $p(\theta)$, or the probability of various click rates before any data. WTF is that? It is my prejudice or domain knowledge about how the click rates in general are, prior to seeing data. If I have no idea, a decent alternative is to set $p(\theta)=\text{const.}$, or that all click rates are equally good guesses. ($p(\theta)$ is called _prior_, and we'll come back to it later.)
+
+---
 
 Ok, back to reality. :) 
-How do $p(\theta|N, k)$ look like in practice, for the counts of clicks and visits we have? 
+How do $p(\theta\,|\,N, k)$ look like in practice, for the counts of clicks and visits we have? Below are plots for daily click rates. There is now a separate click rate $\theta$ behind the observed clicks of each day, and for variants __A__ and __B__ separately. That is, 12 different $\theta$'s. (We will stick with two later.) Dashed lines are the true values, that we happen to (exceptionally) know because we're simulating nature here...
 
 
 ```{r}
 example.posterior <- abtest.posteriorplot(example)
 # quartz(width=14, height=6)
 print(example.posterior$plot
-      + geom_vline(xintercept=rate.A, linetype='dashed', colour=colours[1])
-      + geom_vline(xintercept=rate.B, linetype='dashed', colour=colours[2]))
+      + geom_vline(xintercept=rate.A, linetype='dashed', colour="dodgerblue4")
+      + geom_vline(xintercept=rate.B, linetype='dashed', colour="goldenrod2")
+      + scale_color_manual(values=c("dodgerblue4", "goldenrod2"))
+      + scale_y_continuous(breaks=NULL)
+      + scale_x_continuous(breaks=c(.02, .05, .1))
+      + xlab("theta") + ylab("probability (density)"))
 
 ```
 
+## Getting practical
+
+Happened so far: Given number of clicks $k$, and the total number of visits, $N$, we were able to compute the _probability distribution_ of the underlying true click rate, given the data:
+$$
+p(\theta\, |\, k, N) \propto \theta^k\, (1-\theta)^{N-k}\.
+$$
+
+Probability distributions of things in the world are called _posteriors_ in general, because they come after data.  This particular posterior is of the mathematical form called _Beta distribution_. Not all probabilities of unknown things in the world are Beta distributed. Here it arises because of our model happens to be such. 
+
+### Simulating from a posterior
+
+If you google for Beta distribution, you may stumble functions that _generate "random variates" that are Beta distributed_. A random variate here is a fancy word for a number. :) In R the relevant function is __rbeta()__. 
+
+So you have 212 visits in total, and 13 clicks, and do want to see possible values for the true click rate?
+```{r}
+click.rate.samples <- rbeta(10000, 13+1, 212-13+1)
+qplot(click.rate.samples) + geom_histogram() + xlim(0, .2)
+```
+
+So that was quite easy. :) Those $+1$'s come from the $p(\theta)$ of the previous section, and they basically say "Prior to data, I have no idea what the click rate is, or even if I have, I don't want to tell.". 
+
+Compare to the Beta distribution obtained with our function
+````{r}
+betaplots(mean=13/212, sample.size=212) + xlim(0, .2)
+```
+
+In practice, managing our result $p(\theta\,|\,N, k)$ is often easier if we take those random samples from __rbeta()__, instead of trying to track the analytical distribution. There are analogous functions in Python or Javascript for example. 
+
+For many simple models, the posteriorcan be written as a formula, or "in analytical form" as statisticians say. If there are a lot of data, it can often be approximated by the normal distribution even if the model is not so simple. Then there are models for which we cannot have a analytic posterior, not even a good approximation. But maybe surprisingly, we can often still get samples from the posterior! This may require heavy computation.
+
+Here we stick with our particular simple model, and __rbeta()__ is sufficient.
 
 
+### How about the comparison of A and B?
+
+
+
+### The "I have no prior idea thing"... what if you have?
+
+Conjugate priors
+
+### What happens to the posterior, when data increases?
+
+
+### What is the classic A/B testing in this context? p-values?
+
+### Extensions
+
+### What you need to remember
+
+
+
+
+```
 Matemaattisesti: mik?? on todenn??k??isyys p ostaa varianteilla
 Oikea kysymys : mik?? on p?
 Malli: Binomiaali jakauma
@@ -187,3 +248,4 @@ Testiryhmien tekeminen ja kontrollointi T??RKE????.
 Menee helposti pieleen.
 Tapauskohtaista.
 ajalliset vaikutukset
+```
