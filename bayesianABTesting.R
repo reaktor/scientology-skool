@@ -90,13 +90,15 @@ click.data <- function(p.A, p.B, days=2, mean.visits=2000, test.group=0.2){
 
 click.plots <- function(df){
     out <- list()
+    df$visits_no_click <- df$visits - df$clicks
     zz <- melt(df, id.vars=c('day', 'variant'))
-    gp <- ggplot(subset(zz, variable %in% c('visits', 'clicks')), aes(day, value))
-    gp <- gp + geom_bar(stat='identity', aes(fill=variant), alpha=0.9, position='dodge')
-    out$histograms <- gp + facet_grid(variable ~ ., scales = 'free_y')
+    gp <- ggplot(subset(zz, variable %in% c('visits_no_click', 'clicks')), aes(day, value))
+    gp <- gp + geom_bar(stat='identity', aes(fill=variable), alpha=0.9, position='stack')
+    out$histograms <- gp + facet_grid(variant ~ ., scales = 'free_y') + ylab("count")
 
     gp <- ggplot(subset(zz, variable == 'click.rate'), aes(x=day, y=value, group=variant))
-    out$rates <- gp + geom_line(size=1.5, aes(colour=variant))
+    out$rates <- gp + geom_line(size=1.5, aes(colour=variant)) + ylab("click rate (raw)") +
+      scale_color_manual(values=c("dodgerblue4", "goldenrod1", "darkorchid3",  "darkolivegreen4"))
 
     out
 }

@@ -8,25 +8,30 @@ source('bayesianABTesting.R')
 ```
 
 ###But why?
-So that you understand your test results correctly, including the uncertainty in them, without the p-value hassle
+So that you understand your test results correctly, including the uncertainty in them, without the p-value hassle.
 
 ###Also:
 
-Gentle introduction to Bayesian method
+Gentle introduction to Bayesian methods.
 
 ###After this
-You understand the results of Bayesin analysis through the _posterior_ & are familiar with the related concepts such as _statistical model_ and _prior_
+You understand the results of Bayesin analysis, and are familiar with terms such as _posterior_,  _prior_, and _statistical model_.
 
 ***
 
 ###Our case
 
-Reaktor website has a one-click purchase of a fixed-price-scope-schedule-team agile software project. There are two variants of the button, which is better? How much?
+Reaktor website has a one-click purchase of a fixed-price-scope schedule-team agile software project, or whatever. More to the point, there are _two variants of the button_. Which is better? How much?
 
 **What do we measure**? 
 
 Visits on the page and button clicks.
-Here's some simulated data (here we set the click rates that we want to find out later). We have on average 1500 visits on the page and test option B for 20% of the visitors:
+
+Below are some simulated data, with pre-set click rates. Those are the underlying rates that we do not know in the measurement situation, and which we are after. Per day, we have on average 1500 visits on the page, of which 20% see the option __B__, for a total of six days.
+
+Note that if you re-knit this document from the R Markdown file, data is re-generated and the results will change. How clear the difference between __A__ and __B__ looks like, from the raw click rates, _varies by run_. _That's also how it is in real life!_ Our goal is to get beyond that variation to get an idea of how things are in reality. 
+
+Reality here refers to the pre-set click rates. In practice we also have pre-set click rates, but they are set by  nature. We do not observe them directly. We observe only data.
 
 ```{r}
 rate.A <- 0.052
@@ -37,25 +42,16 @@ example <- click.data(rate.A, rate.B, mean.visits=1500, test.group=0.2, days=6)
 print(example)
 ```
 
+So this is the (simulated) setup, and the data above is all we know from measurements. 
+
 ---
 
-Let's plot some histograms
+That's how the data looks like as plots:
 
 ```{r}
 example.plots <- click.plots(example)
-
-# quartz(width=14, height=6)
 print(example.plots$histograms)
-```
-
----
-.. and daily average click rates
-
-```{r}
-#quartz(width=14, height=6)
-print(example.plots$rates
-      + geom_hline(yintercept=rate.A, linetype='dashed', colour=colours[1])
-      + geom_hline(yintercept=rate.B, linetype='dashed', colour=colours[2]))
+print(example.plots$rates)
 ```
 
 ---
