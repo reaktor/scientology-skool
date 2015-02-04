@@ -188,16 +188,38 @@ Here we stick with our particular simple model, and __rbeta()__ is sufficient.
 
 ### How about the comparison of A and B?
 
+```{r}
+click.rate.samples <- rbeta(100000, 13 +1, 212-13 +1) - rbeta(100000, 20 +1, 400-20 +1)
+qplot(click.rate.samples) + geom_histogram() + xlim(-.10, .10)
+```
+
+What is the probability for the $(212, 13)$ case to have a larger click rate?
+```{r}
+sum(click.rate.samples>0)/length(click.rate.samples) # Or simply mean(...)
+````
+That is about 74%. So it is kind of likely that the click rate is larger in the first case, but we are far from sure. 
+
+[Go to the official daily data.]
 
 
-### The "I have no prior idea thing"... what if you have?
+```{r}
+difference.samples <- 
+  function (a.views, a.click, b.views, b.clicks, n.samples=100000, c.prior=1, v.prior=1) {
+     a.posterior.samples <- rbeta(n.samples, a.clicks + v.prior, a.views-a.clicks + v.prior)
+     b.posterior.samples <- rbeta(n.samples, b.clicks + v.prior, b.views-b.clicks + v.prior)
+     b.posterior.samples - a.posterior.samples
+  }
+````
+
+
+
+### "I have no prior idea of the click rate" ... what if you have?
 
 Conjugate priors
 
-### What happens to the posterior, when data increases?
+### What happens to the posterior when data increases?
 
-
-### What is the classic A/B testing in this context? p-values?
+### What is the classic A/B testing in this context? How about p-values?
 
 ### Extensions
 
