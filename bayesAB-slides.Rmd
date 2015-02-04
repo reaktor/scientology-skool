@@ -1,0 +1,124 @@
+---
+title: "A/B testing, Bayes style"
+output:
+  ioslides_presentation:
+    widescreen: no
+---
+
+```{r, echo=FALSE}
+source('bayesianABTesting.R')
+```
+
+## But why?
+So that you understand your test results correctly, including the uncertainty in them, without the p-value hassle.
+
+### Also:
+
+Gentle introduction to Bayesian methods.
+
+### After this
+You understand the results of Bayesin analysis, and are familiar with terms such as _posterior_,  _prior_, and _statistical model_.
+
+## Our case
+
+Reaktor website has a one-click purchase of a fixed-price-scope schedule-team agile software project, or whatever. There are _two variants of the button_. 
+
+Which is better? How much?
+
+**What do we measure**? 
+
+Visits on the page and button clicks.
+
+**What do we want to know**?
+
+The probablity that the visitor clicks on the button to buy
+
+= click rate 
+
+= conversion rate
+
+
+## Collected data
+
+Simulated data for a day, average 2000 visit on the page, 20% see option _B_
+<div class="centered">
+```{r, echo=FALSE}
+rate.A <- 0.049
+rate.B <- 0.068
+
+example <- click.data(rate.A, rate.B, mean.visits=2000, test.group=0.2, days=1)
+
+print(example)
+```
+</div>
+## Bayesian result
+
+<div class="centered">
+Posterior probability distribuition of click rates
+```{r, echo=FALSE}
+example.posterior <- abtest.posteriorplot(example)
+
+print(example.posterior$plot + xlab('click rate') + ylab('') 
+      + theme_minimal())
+```
+</div>
+
+## Problems with the usual way
+
+I get:
+
+- Average conversion rate (_ok, I get this_)
+- P-value (_probablity of obtaining the data when null hypothesis is true ... WTF_)
+- Z-score (_no idea what this is_)
+- Confidence intervals (_I've been told that nobody understands_)
+
+Loads of other numbers I don't understand
+
+## What's behind Bayesian result
+
+Assumption: visitor on page has probablity __P~A~__ of clicking the button when shown variant __A__ and __P~B~__ when shown __B__. Visits are independent of each other
+
+- For those interested, this is called binomial model
+
+Before collecting any data I have an opinnion what the click rate is. Here the opinnion was: I know nothing, all values (between 0 and 1) __P~A~__ and  __P~B~__ are equally good.
+
+- The opinnion _must_ be included in the analysis, even when it is "I don't know"
+- This is called the _prior_
+
+## What do the results mean
+
+Exactly what you think they do (maybe).
+
+The meaning of the of click rate distribution is exactly the same thing as when you say that your _estimate_ of the rain probability for tomorrow is between 20% and 30%.
+
+## The cycle
+
+State your knowledge about the click rates. Can be "_I know nothing_". This is your
+_prior_ distribution.
+
+Define your model how data is generated in your process (Visitors have a probability __P__ to click the button). </br> Ask your local Scientology dealer for help
+
+Collect data
+
+Do Bayesian analysis (or ask someone to do it for you), it is the method of updating the
+knowledge with the collected data 
+
+You get _posterior_ distribution, the knowledge we have about the click rates _given that we have the observed data_. 
+
+## Fun facts
+
+Prior and posterior distributions mean the same thing: it is the mathematical 
+representation of our knowledge including the uncertainty in it (narrow or wide distribution).
+
+In the next experiment (or next day of same experiment) we can, and should use the previous 
+posterior as our prior
+
+Posterior (or prior) contain all the information we have and everything can be calculated from it. 
+Like "How much __A__ is better than __B__?", "How certain we are that __A__ is really better 
+than __B__" etc.
+
+## IRL
+
+<div class="centered">
+Figure of prior and posteriors for cumulative data
+</div>

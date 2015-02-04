@@ -20,7 +20,7 @@ betaplots <- function(mean=0.25, sample.size=2^seq(3, 12), prior=c(1, 1)) {
 
 
 
-abtest.posteriorplot <- function(df, prior = c(1, 1)) {
+abtest.posteriorplot <- function(df, prior = c(1, 1), plot.prior=FALSE) {
     xmax <- max(df$click.rate)
     xmin <- min(df$click.rate)
     xx <- reshape(df, idvar = "day", timevar="variant", direction = "wide")
@@ -40,12 +40,21 @@ abtest.posteriorplot <- function(df, prior = c(1, 1)) {
         a <- cumulative[row, 'clicks.B'] + prior.a
         b <- cumulative[row, 'visits.B'] - cumulative[row, 'clicks.B'] + prior.b
         df$B <- dbeta(df$x, a, b)
+
         all.days <- rbind(all.days, df)
     }
 
     df <- melt(all.days, id.vars = c('x', 'day'), variable_name='variant')
     colnames(df)[4] <- 'pdf'
+
     gp <- ggplot(df, aes(x, pdf)) + geom_line(aes(colour = variant))
+
+    if(plot.prior){
+        x <- seq(xmin*0.5, xmax*1.5, length=500)
+        prior.df <- data.frame(x=x, pdf=dbeta(x, prior.a, prior.b))
+        gp <- gp + geom_line(data=prior.df, linetype='dashed', size=.5)
+    }
+
     list(cumulative=cumulative,
          plot=gp + facet_wrap( ~day, scales='free'))
 }
