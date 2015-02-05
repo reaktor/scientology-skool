@@ -117,8 +117,44 @@ Posterior (or prior) contain all the information we have and everything can be c
 Like "How much __A__ is better than __B__?", "How certain we are that __A__ is really better 
 than __B__" etc.
 
-## IRL
+## From clicks to posterior
 
 <div class="centered">
-Figure of prior and posteriors for cumulative data
+```{r, echo=FALSE}
+rate.A <- 0.049
+rate.B <- 0.068
+
+example <- click.data(rate.A, rate.B, mean.visits=1500, test.group=0.2, days=6)
+
+print(example)
+```
 </div>
+
+---
+
+<div class="centered">
+```{r, echo=FALSE}
+example.plots <- click.plots(example)
+print(example.plots$histograms + theme_minimal())
+```
+</div>
+
+---
+
+<div class="centered">
+```{r, echo=FALSE}
+print(example.plots$rates + theme_minimal())
+```
+</div>
+
+---
+
+<div class="centered">
+```{r, echo=FALSE}
+example.posterior <- abtest.posteriorplot(example, prior=c(5,95), plot.prior=TRUE)
+
+print(example.posterior$plot + xlab('click rate') + ylab('') 
+      + theme_minimal())
+```
+</div>
+
