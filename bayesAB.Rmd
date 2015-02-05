@@ -156,40 +156,42 @@ print(example.posterior$plot
 
 ## Getting practical
 
-Happened so far: Given number of clicks $k$, and the total number of visits, $N$, we were able to compute the _probability distribution_ of the underlying true click rate, given the data:
+Happened so far: Given number of clicks $k$, and the total number of visits, $N$, we were able to compute the _probability distribution_ of the underlying true click rate:
 $$
 p(\theta\, |\, k, N) \propto \theta^k\, (1-\theta)^{N-k}\;.
 $$
 
-Probability distributions of things in the world are called _posteriors_ in general, because they come after data.  This particular posterior is of the mathematical form called _Beta distribution_. Not all probabilities of unknown things in the world are Beta distributed. Here it arises because of our model happens to be such. 
+The underlying true click rate $\theta$ is called a _parameter_ of our model. (We have only one parameter, in general there can be many, even thousands or millions.) Probability distributions parameters conditioned no data are called _posteriors_.
+
+This particular posterior is of the mathematical form called _Beta distribution_. Not all posteriors are Beta distributed. Here the Beta arises because our model happens to be Binomial, and the prior is flat.
 
 ### Simulating from a posterior
 
-If you google for Beta distribution, you may stumble functions that _generate "random variates" that are Beta distributed_. A random variate here is a fancy word for a number. :) In R the relevant function is __rbeta()__. 
+In practice it is often easiest to describe posteriors by drawing random samples from them, instead of trying to manage the analytical form.
 
-So you have 212 visits in total, and 13 clicks, and do want to see possible values for the true click rate?
+In R, for Beta distribution the relevant function is __rbeta()__. 
+
+Assume there is 212 visits in total, of which 13 lead to a positive response. We generate samples from the associated posterior $p(\theta)$, the true click rate:
 ```{r, message=FALSE, warning=F}
 click.rate.samples <- rbeta(10000, 13+1, 212-13+1)
 qplot(click.rate.samples) + geom_histogram() + xlim(0, .2)
 ```
 
-So that was quite easy. :) Those $+1$'s come from the $p(\theta)$ of the previous section, and they basically say "Prior to data, I have no idea what the click rate is, or even if I have, I don't want to tell.". 
+Those $+1$'s correspond to a flat prior $p(\theta)$. They basically say "Prior to data, I have no idea what the click rate is, or even if I have, I don't want to tell.". 
 
-Compare to the Beta distribution obtained with our function
+The histogram of random draws approximates the analytical posterior:
 ````{r, message=FALSE, warning=F}
 betaplots(mean=13/212, sample.size=212) + xlim(0, .2)
 ```
 
-In practice, managing our result $p(\theta\,|\,N, k)$ is often easier if we take those random samples from __rbeta()__, instead of trying to track the analytical distribution. There are analogous functions in Python or Javascript for example. 
-
-For many simple models, the posteriorcan be written as a formula, or "in analytical form" as statisticians say. If there are a lot of data, it can often be approximated by the normal distribution even if the model is not so simple. Then there are models for which we cannot have a analytic posterior, not even a good approximation. But maybe surprisingly, we can often still get samples from the posterior! This may require heavy computation.
+Analytical posteriors, in terms of formulas or standard distributions like Beta are available only for simple models. If there are a lot of data, the posterior can often be approximated by the normal distribution, even if the model is not simple. Then there are models for which we cannot have a analytic posterior and not even a good approximation. But maybe surprisingly, we can often still get samples from the posterior. This may require heavy computation.
 
 Here we stick with our particular simple model, and __rbeta()__ is sufficient.
 
 
 ### How about the comparison of A and B?
 
-Samples of click rate $\theta$ are possible states of the world. We can pair those up for treatments A and B to see how the difference is in possible worlds, given the data.
+Samples of click rate $\theta$ are possible states of the world, in terms of the underlying click rate. We can pair those up for treatments A and B to see how the difference is in possible worlds, given the data.
 
 ```{r, message=FALSE}
 click.rate.samples <- rbeta(100000, 13 +1, 212-13 +1) - rbeta(100000, 20 +1, 400-20 +1)
@@ -202,7 +204,8 @@ sum(click.rate.samples>0)/length(click.rate.samples) # Or simply mean(...)
 ````
 So click rate looks like larger in the first case, but we are far from sure. 
 
-Let's look our example data again.
+Let's look our example data again. We assume the click rate is same for each day, sum the data over days, and 
+see how the posterior of the click rate looks like.
 
 ```{r, warning=F, message=F}
 example
@@ -219,6 +222,8 @@ c(mean(rate.a), mean(rate.b), mean(rate.a - rate.b))
 mean(rate.a > rate.b) # Probability of rate.a being larger
 qplot(rate.a-rate.b) + geom_histogram() 
 
+quantile(rate.a-rate.b, c(.05/2, .5, 1-.05/2)) # Median and 95% confidence intervals
+
 ````
 
 
@@ -228,9 +233,9 @@ Recall the general form of the posterior:
 $$
 p(\theta\, |\, k, N) \propto \theta^k\, (1-\theta)^{N-k}\;p(\theta)\;.
 $$
-Prior knowledge about the click rate $theta$ is encoded to the prior, $p(\theta)$. Then $p(\theta)$ is not constant. A constant prior is convenient, for it leads the posterior to be the Beta distiribution, for which we have tools in many languages. 
+Prior knowledge about the click rate $\theta$ is encoded to the prior, $p(\theta)$. An informative $p(\theta)$ is not constant. A constant prior is convenient, for it leads the posterior to be the Beta distiribution, for which we have tools in many languages. 
 
-But there is a trick available for certain kinds of non-constant priors. If prior is of the form
+But there is a trick available for certain kinds of non-constant priors. If the prior is of the form
 $$
 p(\theta) = \theta^{\alpha}\, (1-\theta)^{\beta}\;,
 $$
@@ -240,17 +245,27 @@ p(\theta\, |\, k, N) \propto \theta^{k+\alpha}\, (1-\theta)^{N-k+\beta}\;.
 $$
 So this is still a Beta distribution, just with different parameters. 
 
-Note that the this kind of prior is also a Beta distribution! You can choose $\alpha$ and $\beta$ by plotting the prior with different values, and see which fits with our preconceptions.
+Note the prior is _also_ a Beta distribution! You can choose $\alpha$ and $\beta$ by plotting the prior with different values, and see which fits with our preconceptions. The prior below is with sampling:
 
-Another way to choose the prior is the note that $\alpha$ and $\beta$ are in the formula like virtual clicks and visits with no clicks, and $\alpha/(\alpha+\beta)$ is a virtual click rate. So you can guess a "prior click rate" $\alpha/(\alpha+\beta)$ and think about how much evidence you think you have, in terms of the number of virtual visits $\alpha + \beta$. How many clicks are needed to cancel your preconceptions? Again, it helps to plot the distributions.
+```{r, message=FALSE}
+prior.samples <- rbeta(100000, 1, 4) 
+qplot(prior.samples) + geom_histogram() + xlim(0, 1)
+```
 
-In general, a prior that melts onto the "likelihood" part of the model is called _conjugate_. Non-conjugate priors can be used, but computations is more difficult. 
+Another way to choose the prior is the note that $\alpha$ and $\beta$ are in the formula like virtual clicks and visits with no clicks, and $\alpha/(\alpha+\beta)$ is a virtual click rate. So you can guess a "prior click rate" $\alpha/(\alpha+\beta)$ and think about how much evidence you think you have, in terms of the number of virtual visits $\alpha + \beta$. How many clicks are needed to cancel your preconceptions? Again, it helps to plot the distributions. Below an analytic prior (no sampling), by misusing our posterior plotting function:
 
-Note that in objective settings, if you want to convince others, your prior is be somehow generally acceptable. Especially, if you compare groups A and B, you should not have a different prior for different groups, at least not without a very strong reason.
+```{r, message=FALSE}
+betaplots(mean=.25, sample.size=3, prior=c(0, 0))
+```
+
+
+In general, a prior that melts into the "likelihood" part of the model is called _conjugate_. Non-conjugate priors can be used, but computations is more difficult. 
+
+Note that in objective settings, if you want to convince others, your prior must be somehow generally acceptable. Especially if you compare groups A and B, you should not have a different prior for different groups, at least not without a very strong reason.
 
 ### What happens to the posterior when data increases?
 
-It gets narrower, and starts to resemble the gaussian (normal) distribution. The influence of prior vanishes.
+It gets narrower, and starts to resemble the gaussian (normal) distribution. The influence of prior vanishes, even if you had a strongly informative prior.
 
 ```{r, warning=F}
 betaplots(mean=0.02) + xlim(0, .2) + xlab("theta (click rate)")
@@ -260,7 +275,9 @@ betaplots(mean=0.02) + xlim(0, .2) + xlab("theta (click rate)")
 
 Frequentist, classic significance test for the click rates assumes gaussian posteriors, and ignores the prior. The shape of the gaussian approximation can be quite easily computed from data. The problem then turns to comparing two normal distributions, and the concept of z-score appears. 
 
-Frequentist p-values are probabilities to get the difference you see, or larger, if there is no real difference. Our probabilities for a difference of the click rates to be larger or smaller than zero are identical to frequentist p-values if (1) you have a lot of data; (2) click rate is not too small; (3) the frequentist p-value is "one-sided", not "two-sided"; (4) prior is non-informative.
+Frequentist p-values are probabilities to get the difference in click rates you observed in data, or larger, if there is no real difference. Our probabilities for a difference of the click rates to be larger or smaller than zero are identical to frequentist p-values if (1) you have a lot of data; (2) click rate is not too small; (3) the frequentist p-value is "one-sided", not "two-sided"; (4) prior is non-informative.
+
+But even when the number is the same, the interpretation is different.
 
 ### Extensions to classic A/B testing
 
@@ -292,7 +309,7 @@ __rbeta()__ or an equivalent. Samples are possible states of the world.
 
 ### Even more important things
 
-We assume __unbiased samples__, and independent clicks.
+We assume __unbiased sampling__ from a population, and independent clicks.
 
 Treatment effects vary by time, and results of a quick A/B test may be misleading.
 
