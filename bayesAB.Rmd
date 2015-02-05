@@ -3,9 +3,10 @@ title: "A/B testing, Bayes style"
 output:  html_document
 ---
 
-```{r, echo=FALSE}
+```{r, echo=FALSE, message=F}
 source('bayesianABTesting.R')
 #theme_set(theme_minimal(12))
+set.seed(123456)
 ```
 
 ##But why?
@@ -157,7 +158,7 @@ print(example.posterior$plot
 
 Happened so far: Given number of clicks $k$, and the total number of visits, $N$, we were able to compute the _probability distribution_ of the underlying true click rate, given the data:
 $$
-p(\theta\, |\, k, N) \propto \theta^k\, (1-\theta)^{N-k}\.
+p(\theta\, |\, k, N) \propto \theta^k\, (1-\theta)^{N-k}\;.
 $$
 
 Probability distributions of things in the world are called _posteriors_ in general, because they come after data.  This particular posterior is of the mathematical form called _Beta distribution_. Not all probabilities of unknown things in the world are Beta distributed. Here it arises because of our model happens to be such. 
@@ -223,7 +224,29 @@ qplot(rate.a-rate.b) + geom_histogram()
 
 ### "I have no prior idea of the click rate" ... what if you have?
 
-Conjugate priors
+Recall the general form of the posterior:
+$$
+p(\theta\, |\, k, N) \propto \theta^k\, (1-\theta)^{N-k}\;p(\theta)\;.
+$$
+Prior knowledge about the click rate $theta$ is encoded to the prior, $p(\theta)$. Then $p(\theta)$ is not constant. A constant prior is convenient, for it leads the posterior to be the Beta distiribution, for which we have tools in many languages. 
+
+But there is a trick available for certain kinds of non-constant priors. If prior is of the form
+$$
+p(\theta) = \theta^{\alpha}\, (1-\theta)^{\beta}\;,
+$$
+then the posterior becomes
+$$
+p(\theta\, |\, k, N) \propto \theta^{k+\alpha}\, (1-\theta)^{N-k+\beta}\;.
+$$
+So this is still a Beta distribution, just with different parameters. 
+
+Note that the this kind of prior is also a Beta distribution! You can choose $\alpha$ and $\beta$ by plotting the prior with different values, and see which fits with our preconceptions.
+
+Another way to choose the prior is the note that $\alpha$ and $\beta$ are in the formula like virtual clicks and visits with no clicks, and $\alpha/(\alpha+\beta)$ is a virtual click rate. So you can guess a "prior click rate" $\alpha/(\alpha+\beta)$ and think about how much evidence you think you have, in terms of the number of virtual visits $\alpha + \beta$. How many clicks are needed to cancel your preconceptions? Again, it helps to plot the distributions.
+
+In general, a prior that melts onto the "likelihood" part of the model is called _conjugate_. Non-conjugate priors can be used, but computations is more difficult. 
+
+Note that in objective settings, if you want to convince others, your prior is be somehow generally acceptable. Especially, if you compare groups A and B, you should not have a different prior for different groups, at least not without a very strong reason.
 
 ### What happens to the posterior when data increases?
 
