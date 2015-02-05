@@ -267,11 +267,10 @@ Statistical model tells how we see the world in our experiment.
 
 __rbeta()__ or an equivalent. Samples are possible states of the world.
 
-
-
-
 ### Even more important things
 
 We assume __unbiased samples__, and independent clicks.
 
 Treatment effects vary by time, and results of a quick A/B test may be misleading.
+
+
