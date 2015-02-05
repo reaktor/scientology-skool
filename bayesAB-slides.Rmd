@@ -5,7 +5,7 @@ output:
     widescreen: no
 ---
 
-```{r, echo=FALSE}
+```{r, echo=FALSE, message=F}
 source('bayesianABTesting.R')
 ```
 
