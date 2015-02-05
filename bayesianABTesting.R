@@ -4,7 +4,7 @@ require(reshape)
 
 betaplots <- function(mean=0.25, sample.size=2^seq(3, 12), prior=c(1, 1)) {
     prior.a <- prior[[1]]; prior.b <- prior[[2]]
-    df <- data.frame(x = seq(0, 1, length=500))
+    df <- data.frame(x = seq(0, 1, length=5000))
     cn <- c('x')
     for (N in sample.size){
         a <- mean * N
@@ -63,6 +63,9 @@ betapdf <- function(a, b){
     df <- data.frame(x = seq(0, 0.1, length=500))
     df$pdf <- dbeta(df$x, a + prior.a, b + prior.b)
 }
+
+theta.samples <- function (views, clicks, a.prior=1, b.prior=1, n=100000)
+  rbeta(n, a.prior + clicks, b.prior + views-clicks)
 
 simulate.data <- function(p, N=10){
     sample(c(0,1), N, replace=TRUE, prob=c(1-p, p))

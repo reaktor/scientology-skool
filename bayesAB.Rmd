@@ -167,7 +167,7 @@ Probability distributions of things in the world are called _posteriors_ in gene
 If you google for Beta distribution, you may stumble functions that _generate "random variates" that are Beta distributed_. A random variate here is a fancy word for a number. :) In R the relevant function is __rbeta()__. 
 
 So you have 212 visits in total, and 13 clicks, and do want to see possible values for the true click rate?
-```{r}
+```{r, message=FALSE, warning=F}
 click.rate.samples <- rbeta(10000, 13+1, 212-13+1)
 qplot(click.rate.samples) + geom_histogram() + xlim(0, .2)
 ```
@@ -175,7 +175,7 @@ qplot(click.rate.samples) + geom_histogram() + xlim(0, .2)
 So that was quite easy. :) Those $+1$'s come from the $p(\theta)$ of the previous section, and they basically say "Prior to data, I have no idea what the click rate is, or even if I have, I don't want to tell.". 
 
 Compare to the Beta distribution obtained with our function
-````{r}
+````{r, message=FALSE, warning=F}
 betaplots(mean=13/212, sample.size=212) + xlim(0, .2)
 ```
 
@@ -188,7 +188,9 @@ Here we stick with our particular simple model, and __rbeta()__ is sufficient.
 
 ### How about the comparison of A and B?
 
-```{r}
+Samples of click rate $\theta$ are possible states of the world. We can pair those up for treatments A and B to see how the difference is in possible worlds, given the data.
+
+```{r, message=FALSE}
 click.rate.samples <- rbeta(100000, 13 +1, 212-13 +1) - rbeta(100000, 20 +1, 400-20 +1)
 qplot(click.rate.samples) + geom_histogram() + xlim(-.10, .10)
 ```
@@ -197,20 +199,26 @@ What is the probability for the $(212, 13)$ case to have a larger click rate?
 ```{r}
 sum(click.rate.samples>0)/length(click.rate.samples) # Or simply mean(...)
 ````
-That is about 74%. So it is kind of likely that the click rate is larger in the first case, but we are far from sure. 
+So click rate looks like larger in the first case, but we are far from sure. 
 
-[Go to the official daily data.]
+Let's look our example data again.
 
+```{r, warning=F, message=F}
+example
+visits.a <- sum(example[example$variant=="A", "visits"])
+visits.b <- sum(example[example$variant=="B", "visits"])
+clicks.a <- sum(example[example$variant=="A", "clicks"])
+clicks.b <- sum(example[example$variant=="B", "clicks"])
 
-```{r}
-difference.samples <- 
-  function (a.views, a.click, b.views, b.clicks, n.samples=100000, c.prior=1, v.prior=1) {
-     a.posterior.samples <- rbeta(n.samples, a.clicks + v.prior, a.views-a.clicks + v.prior)
-     b.posterior.samples <- rbeta(n.samples, b.clicks + v.prior, b.views-b.clicks + v.prior)
-     b.posterior.samples - a.posterior.samples
-  }
+c(visits.a, visits.b, clicks.a, clicks.b)
+rate.a <- rbeta(100000, 1 + clicks.a, 1 + visits.a - clicks.a)
+rate.b <- rbeta(100000, 1 + clicks.b, 1 + visits.b - clicks.b)
+
+c(mean(rate.a), mean(rate.b), mean(rate.a - rate.b))
+mean(rate.a > rate.b) # Probability of rate.a being larger
+qplot(rate.a-rate.b) + geom_histogram() 
+
 ````
-
 
 
 ### "I have no prior idea of the click rate" ... what if you have?
@@ -219,55 +227,51 @@ Conjugate priors
 
 ### What happens to the posterior when data increases?
 
+It gets narrower, and starts to resemble the gaussian (normal) distribution. The influence of prior vanishes.
+
+```{r, warning=F}
+betaplots(mean=0.02) + xlim(0, .2) + xlab("theta (click rate)")
+```
+
 ### What is the classic A/B testing in this context? How about p-values?
 
-### Extensions
+Frequentist, classic significance test for the click rates assumes gaussian posteriors, and ignores the prior. The shape of the gaussian approximation can be quite easily computed from data. The problem then turns to comparing two normal distributions, and the concept of z-score appears. 
+
+Frequentist p-values are probabilities to get the difference you see, or larger, if there is no real difference. Our probabilities for a difference of the click rates to be larger or smaller than zero are identical to frequentist p-values if (1) you have a lot of data; (2) click rate is not too small; (3) the frequentist p-value is "one-sided", not "two-sided"; (4) prior is non-informative.
+
+### Extensions to classic A/B testing
+
+Multiple treatments, not just A and B. 
+
+Using covariates: the viewers have one or more known properties, and you want to see how they affect the click rate, or difference of click rates between groups. 
+
+Analyse temporal effects
+
+Hierarchy for groups: A1, A2, A3, A4, B1, B2, B3, B4. You may find differences between A and B even if subgroup differences are not significant. 
+
+Cross designs: Alternate two or more variables simultaneously. 
+
+Continuous treatments: Instead of discrete groups, have a thing that varies continuously, such as a button size or color. 
+
+Incremental (sequential) experiments: get results when you have enough data, but don't compromise the results by "waiting for significance". 
+
+Automatic optimization: the system experiments all the time, and directs resources where posterior uncertainty is large and utilities are high. 
 
 ### What you need to remember
 
+Prior are your preconceptions.
+
+Posterior is what is known after data.
+
+Statistical model tells how we see the world in our experiment. 
+
+__rbeta()__ or an equivalent. Samples are possible states of the world.
 
 
 
-```
-Matemaattisesti: mik?? on todenn??k??isyys p ostaa varianteilla
-Oikea kysymys : mik?? on p?
-Malli: Binomiaali jakauma
-kuinka monta konversiota N n??yt??ll???
-Malli sille miten ajatellaan datan generoituneen
-v????rinp??in (data ehdolla malli)
-Bayesin kaava (johto, saa olla ym??rt??m??tt??)
-Priori vakioksi, palataan my??h
-Posteriori plotteja -> kaikki ymm??rt???? mik?? on posteriori. 
-todenn??k??isyysjakaumat mitta meid??n ep??varmuudelle
-Posteriorista voidaan laskea hakutut asiat
-kuinka paljon toinen on parempi (keskinm????rin), kuinka varmaa on ett?? on parempi
-Priori
-Katotaa Bayesin kaavaa
-prioriin pakko laittaa jotain
-priori on AINA, my??s frekventisteill??, vakkei ne aina my??nn??
-Meid??n ennakkoluulo asiasta
-Luonnollista laittaa tasainen -> ei tiedet?? mit????n
-toinen tapa, laitetaan matemaattisesti kivan muotoinen funktio -> funktio ei muuta muotoa kun lis??t????n likelihood
-konjugaatti priori
-t??ss?? Beta
-Esimerkki, tehd????n sama analyysi Beta priorilla
-Eri countit nyt
-Poll: mik?? on konversio todenn??k??isyys?
-Poll: paljonko haluat dataa ett?? hylk????t ennakkoluulon?
-Betan parametrit tulee t??st?? (selitet????nk???)
-Betan keskiarvo ja hajonta (Poll: onko informatiivista?)
-Uusia posterioiri plotteja
 
-Huomaa:
-Laskut n??in helppoja vain t??ss?? tapauksessa, hyvin harvoin -> Syy miksi Bayes ei ole yleistynyt
-Nyky????n tietskarit tekee simulaatioilla, ei en???? niin vaikeeta
+### Even more important things
 
-Extroja:
-Frekventistisi?? tuloksia, milt?? n??ytt????? N??m??kin on oikein, eri tapa esitt????
-Monta ryhm???? (A/B ei viittaa ryhmien m????r????n vaan outcomien m????r????n) monta treatment
-kovariaatit -> probabilistig programming, ratkaisee ongelman todenn??k??isyyden k????n??st?? 
-Testiryhmien tekeminen ja kontrollointi T??RKE????.
-Menee helposti pieleen.
-Tapauskohtaista.
-ajalliset vaikutukset
-```
+We assume __unbiased samples__, and independent clicks.
+
+Treatment effects vary by time, and results of a quick A/B test may be misleading.
