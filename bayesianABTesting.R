@@ -106,11 +106,11 @@ click.plots <- function(df){
     zz <- melt(df, id.vars=c('day', 'variant'))
     gp <- ggplot(subset(zz, variable %in% c('visits_no_click', 'clicks')), aes(day, value))
     gp <- gp + geom_bar(stat='identity', aes(fill=variable), alpha=0.9, position='stack')
+    gp <- gp + scale_fill_manual(values=c("darkorchid3",  "darkolivegreen4", "dodgerblue4", "goldenrod1"))
     out$histograms <- gp + facet_grid(variant ~ ., scales = 'free_y') + ylab("count")
 
     gp <- ggplot(subset(zz, variable == 'click.rate'), aes(x=day, y=value, group=variant))
-    out$rates <- gp + geom_line(size=1.5, aes(colour=variant)) + ylab("click rate (raw)") +
-      scale_color_manual(values=c("dodgerblue4", "goldenrod1", "darkorchid3",  "darkolivegreen4"))
+    out$rates <- gp + geom_line(size=1.5, aes(colour=variant)) + ylab("click rate (raw)")
 
     out
 }
