@@ -2,11 +2,13 @@
 title: "A/B testing, Bayes style"
 output:
   ioslides_presentation:
-    widescreen: no
+    widescreen: yes
 ---
 
-```{r, echo=FALSE, message=F}
+```{r, echo=FALSE, message=FALSE}
+>>>>>>> modifies slide r styles and plots
 source('bayesianABTesting.R')
+set.seed(6789)
 ```
 
 ## But why?
@@ -35,26 +37,29 @@ The probablity that the visitor clicks on the button to buy
 
 = click rate 
 
-= conversion rate
-
-
 ## Collected data
 
-Simulated data for a day, average 2000 visit on the page, 20% see option _B_
+Simulated data for a day, average 2000 visit on the page
+
+20% of visitors see option __B__
+
 <div class="centered">
-```{r, echo=FALSE}
+```{r, echo=FALSE, comment=''}
 rate.A <- 0.049
 rate.B <- 0.068
 
 example <- click.data(rate.A, rate.B, mean.visits=2000, test.group=0.2, days=1)
 
-print(example)
+print(example, row.names=FALSE)
 ```
 </div>
+
 ## Bayesian result
 
 <div class="centered">
-Posterior probability distribuition of click rates
+
+Posterior probability distribution of click rates
+
 ```{r, echo=FALSE}
 example.posterior <- abtest.posteriorplot(example)
 
@@ -64,6 +69,8 @@ print(example.posterior$plot + xlab('click rate') + ylab('')
 </div>
 
 ## Problems with the usual way
+
+Check classical results here: http://abtestguide.com/calc/
 
 I get:
 
@@ -120,13 +127,13 @@ than __B__" etc.
 ## From clicks to posterior
 
 <div class="centered">
-```{r, echo=FALSE}
+```{r, echo=FALSE, size='small', comment=''}
 rate.A <- 0.049
 rate.B <- 0.068
 
 example <- click.data(rate.A, rate.B, mean.visits=1500, test.group=0.2, days=6)
 
-print(example)
+print(example,row.names = FALSE)
 ```
 </div>
 
