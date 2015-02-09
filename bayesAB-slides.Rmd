@@ -6,7 +6,6 @@ output:
 ---
 
 ```{r, echo=FALSE, message=FALSE}
->>>>>>> modifies slide r styles and plots
 source('bayesianABTesting.R')
 set.seed(6789)
 ```
